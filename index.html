@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fresh Beatz</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="description" content="Fresh Beatz – pocket chord synthesizer and looper">
+<meta name="theme-color" content="#e7e3d9">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fresh Beatz">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script>
+  // set theme before first paint (no flash)
+  try {
+    var s = JSON.parse(localStorage.getItem('fresh-beatz') || '{}');
+    var th = s.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.dataset.theme = th;
+  } catch (e) { document.documentElement.dataset.theme = 'light'; }
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="device" id="device">
+
+  <section class="left">
+    <div class="brand">Fresh<b>Beatz</b></div>
+    <div class="speaker" aria-hidden="true"></div>
+
+    <div class="transport">
+      <button class="tbtn rec" id="t-rec" data-i18n-title="rec" title="Record">●</button>
+      <button class="tbtn play" id="t-play" data-i18n-title="play" title="Play / stop loop">▶</button>
+      <button class="tbtn" id="t-undo" data-i18n-title="undo" title="Undo last layer">↶</button>
+      <button class="tbtn" id="t-clr" data-i18n-title="clear" title="Clear loop">✕</button>
+    </div>
+
+    <div class="knobwrap" id="knobwrap">
+      <div class="knob" id="knob" role="slider" tabindex="0" aria-label="Volume" aria-valuemin="0" aria-valuemax="100"><i></i></div>
+    </div>
+  </section>
+
+  <section class="right">
+    <div class="display" id="display" role="button" aria-label="Settings">
+      <div class="d-top" id="d-top"></div>
+      <div class="d-mid" id="d-mid"></div>
+      <div>
+        <div class="d-bot" id="d-bot"></div>
+        <div class="d-bar"><i id="d-bar"></i></div>
+      </div>
+    </div>
+
+    <button class="cbtn key" data-panel="key" data-i18n-title="key" title="Key">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="24" r="8"/><path d="M23 24h21M36 24v7M42 24v5"/></svg>
+    </button>
+    <button class="cbtn snd" data-panel="sound" data-i18n-title="sound" title="Sound">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 26H13C17 26 17 11 22 11S26 37 31 37 35 26 43 26"/></svg>
+    </button>
+    <button class="cbtn clk" data-panel="tempo" data-i18n-title="tempo" title="Tempo">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="24" r="17"/><path d="M24 13v11l7 4"/></svg>
+    </button>
+
+    <div class="mods">
+      <button class="pad mod" data-m="seventh"><i class="led"></i><span class="nm">7th</span></button>
+      <button class="pad mod" data-m="sus"><i class="led"></i><span class="nm">Sus</span></button>
+      <button class="pad mod" data-m="alt"><i class="led"></i><span class="nm">Alt</span></button>
+    </div>
+
+    <div class="chords">
+      <button class="pad chord" data-i="0"><span class="num"></span><span class="nm"></span></button>
+      <button class="pad chord" data-i="1"><span class="num"></span><span class="nm"></span></button>
+      <button class="pad chord" data-i="2"><span class="num"></span><span class="nm"></span></button>
+      <button class="pad chord" data-i="3"><span class="num"></span><span class="nm"></span></button>
+    </div>
+
+    <div class="panel" id="panel" hidden></div>
+  </section>
+
+</main>
+<noscript>Fresh Beatz needs JavaScript.</noscript>
+<script src="app.js"></script>
+</body>
+</html>
