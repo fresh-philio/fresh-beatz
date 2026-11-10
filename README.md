@@ -11,8 +11,10 @@ A pocket chord synthesizer and looper as a PWA, inspired by the HiChord Pocket c
 - **6 sounds:** Pad, Keys, Pluck, Organ, Glass, Chip, with tone (filter) and reverb
 - **Arpeggiator:** up, down, up/down, random at 1/4, 1/8, 1/16
 - **Looper:** 1/2/4/8 bars, count-in, metronome, quantize, overdub layers, undo layer, clear
+- **Joystick** (spring-loaded): left/right = pitch bend ±2 semitones, up/down = octave for newly played chords. Works with multitouch while you play
+- **Drum mode** (🎹/🥁 button): Kick, Snare, Hat, Open hat, Tom, Clap, Crash on the pads (synthesised, recordable into the loop), plus **auto beats** (Rock, Hip-Hop, House, Lo-Fi) in the clock menu
 - **Audio export:** record the master output and download it (webm/ogg, m4a on iOS)
-- **Multitouch**, volume knob (drag), tap tempo
+- **Multitouch**, tap tempo (loudness is up to the system volume)
 - **Dark mode** (follows the system, switchable), **English / Deutsch**
 - **Landscape and portrait** layouts, installable, offline-capable
 
@@ -24,14 +26,15 @@ A pocket chord synthesizer and looper as a PWA, inspired by the HiChord Pocket c
 | 7th / Sus / Alt | Modifiers |
 | Key button (grey) | Key and major/minor |
 | Wave button (yellow) | Sound, tone, reverb |
-| Clock button (red) | BPM, tap tempo, arpeggio, loop length, metronome, quantize, count-in |
-| Display (tap) | Settings: language, theme, volume, audio export, install |
+| Clock button (red) | BPM, tap tempo, arpeggio, auto beat, loop length, metronome, quantize, count-in |
+| Display (tap) | Settings: language, theme, audio export, install |
 | ● | Record into the loop (count-in first if nothing is running) |
 | ▶ / ■ | Start / stop loop |
 | ↶ / ✕ | Undo last layer / clear loop |
-| Knob | Volume (drag up/down) |
+| Joystick | Pitch bend (left/right) and octave (up/down), springs back |
+| 🎹 / 🥁 | Switch between chord pads and drum pads |
 
-Desktop keys: `A S D F` chords · `Z X C` modifiers · `Space` play · `R` record.
+Desktop keys: `A S D F` chords · `Z X C` modifiers · `Space` play · `R` record · `M` chords/drums.
 
 ## Run locally
 
@@ -51,7 +54,9 @@ python3 -m http.server 8080
    - iPhone/iPad: Share → *Add to Home Screen*
 
 All paths are relative, so it also works under `https://user.github.io/repo/`.
-After changing files, bump `CACHE` in `sw.js` (e.g. `fresh-beatz-v2`) so installed apps pick up the update.
+After changing files, bump `CACHE` in `sw.js` (e.g. `fresh-beatz-v3`) so installed apps pick up the update.
+
+If the browser doesn't offer *Install*: open DevTools → *Application → Manifest*. It lists what is missing. All files including `icons/` and `sw.js` must be deployed, and the page must be served over HTTPS (GitHub Pages is).
 
 ## Latency notes
 
@@ -91,8 +96,10 @@ Ein Taschen-Akkord-Synthesizer mit Looper als PWA, inspiriert vom HiChord-Pocket
 - **6 Klänge:** Pad, Keys, Pluck, Organ, Glass, Chip, mit Helligkeit (Filter) und Hall
 - **Arpeggiator:** aufwärts, abwärts, auf/ab, zufällig in 1/4, 1/8, 1/16
 - **Looper:** 1/2/4/8 Takte, Vorzähler, Metronom, Quantisierung, Overdub-Ebenen, Ebene rückgängig, leeren
+- **Joystick** (federnd): links/rechts = Pitch-Bend ±2 Halbtöne, hoch/runter = Oktave für neu gespielte Akkorde. Funktioniert per Multitouch beim Spielen
+- **Drum-Modus** (🎹/🥁-Taste): Kick, Snare, Hat, Open Hat, Tom, Clap, Crash auf den Pads (synthetisiert, in den Loop aufnehmbar), dazu **Auto-Beats** (Rock, Hip-Hop, House, Lo-Fi) im Uhr-Menü
 - **Audio-Export:** Ausgabe aufnehmen und herunterladen (webm/ogg, m4a auf iOS)
-- **Multitouch**, Lautstärke-Knopf (ziehen), Tap-Tempo
+- **Multitouch**, Tap-Tempo (Lautstärke über das System)
 - **Dark Mode** (folgt dem System, umschaltbar), **Deutsch / English**
 - **Quer- und Hochformat**, installierbar, offlinefähig
 
@@ -104,14 +111,15 @@ Ein Taschen-Akkord-Synthesizer mit Looper als PWA, inspiriert vom HiChord-Pocket
 | 7th / Sus / Alt | Modifier |
 | Schlüssel-Taste (grau) | Tonart und Dur/Moll |
 | Wellen-Taste (gelb) | Klang, Helligkeit, Hall |
-| Uhr-Taste (rot) | BPM, Tap-Tempo, Arpeggio, Loop-Länge, Metronom, Quantisierung, Vorzähler |
-| Display (antippen) | Einstellungen: Sprache, Design, Lautstärke, Audio-Export, Installieren |
+| Uhr-Taste (rot) | BPM, Tap-Tempo, Arpeggio, Auto-Beat, Loop-Länge, Metronom, Quantisierung, Vorzähler |
+| Display (antippen) | Einstellungen: Sprache, Design, Audio-Export, Installieren |
 | ● | In den Loop aufnehmen (erst Vorzähler, falls nichts läuft) |
 | ▶ / ■ | Loop starten / stoppen |
 | ↶ / ✕ | Letzte Ebene entfernen / Loop leeren |
-| Knopf | Lautstärke (hoch/runter ziehen) |
+| Joystick | Pitch-Bend (links/rechts) und Oktave (hoch/runter), federt zurück |
+| 🎹 / 🥁 | Zwischen Akkord- und Drum-Pads umschalten |
 
-Desktop-Tasten: `A S D F` Akkorde · `Z X C` Modifier · `Leertaste` Play · `R` Aufnahme.
+Desktop-Tasten: `A S D F` Akkorde · `Z X C` Modifier · `Leertaste` Play · `R` Aufnahme · `M` Akkorde/Drums.
 
 ### Lokal starten
 
@@ -129,7 +137,9 @@ python3 -m http.server 8080
    - iPhone/iPad: Teilen → *Zum Home-Bildschirm*
 
 Alle Pfade sind relativ, es läuft also auch unter `https://user.github.io/repo/`.
-Nach Änderungen `CACHE` in `sw.js` hochzählen (z. B. `fresh-beatz-v2`), damit installierte Apps das Update laden.
+Nach Änderungen `CACHE` in `sw.js` hochzählen (z. B. `fresh-beatz-v3`), damit installierte Apps das Update laden.
+
+Wenn der Browser *Installieren* nicht anbietet: DevTools → *Application → Manifest* öffnen, dort steht, was fehlt. Alle Dateien inklusive `icons/` und `sw.js` müssen hochgeladen sein, und die Seite muss über HTTPS laufen (GitHub Pages tut das).
 
 ### Latenz
 

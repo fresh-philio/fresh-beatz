@@ -27,7 +27,10 @@
 <main class="device" id="device">
 
   <section class="left">
-    <div class="brand">Fresh<b>Beatz</b></div>
+    <div class="brandrow">
+      <div class="brand">Fresh<b>Beatz</b></div>
+      <button class="tbtn modebtn" id="t-mode" data-i18n-title="mode" title="Chords / Drums">🎹</button>
+    </div>
     <div class="speaker" aria-hidden="true"></div>
 
     <div class="transport">
@@ -37,8 +40,9 @@
       <button class="tbtn" id="t-clr" data-i18n-title="clear" title="Clear loop">✕</button>
     </div>
 
-    <div class="knobwrap" id="knobwrap">
-      <div class="knob" id="knob" role="slider" tabindex="0" aria-label="Volume" aria-valuemin="0" aria-valuemax="100"><i></i></div>
+    <div class="stickwrap" id="stickwrap" aria-label="Pitch joystick">
+      <div class="stickwell"><i class="dir l">♭</i><i class="dir r">♯</i><i class="dir u">8va</i><i class="dir d">8vb</i></div>
+      <div class="stick" id="stick"></div>
     </div>
   </section>
 

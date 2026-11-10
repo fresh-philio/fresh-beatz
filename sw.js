@@ -1,5 +1,5 @@
 /* Fresh Beatz service worker – offline-first app shell */
-const CACHE = 'fresh-beatz-v1';
+const CACHE = 'fresh-beatz-v2';
 const ASSETS = [
   './', './index.html', './style.css', './app.js', './manifest.webmanifest',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png',
@@ -7,7 +7,8 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // add one by one so a single missing file can never break the whole install
+  e.waitUntil(caches.open(CACHE).then(c => Promise.all(ASSETS.map(a => c.add(a).catch(() => null)))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -28,7 +29,7 @@ self.addEventListener('fetch', e => {
         const net = fetch(req).then(res => {
           if (res && res.ok) cache.put(req, res.clone());
           return res;
-        }).catch(() => hit);
+        }).catch(() => hit || cache.match('./index.html'));
         return hit || net;
       })
     )

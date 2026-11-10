@@ -12,6 +12,17 @@
   const ALT = [1, 2, 6, 7];        // ii iii vii I'
   const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
   const ARP_LABEL = ['', '↑', '↓', '↕', 'RND'];
+  const MOD_KEYS = ['seventh', 'sus', 'alt'];
+  const MOD_LABEL = { seventh: '7th', sus: 'Sus', alt: 'Alt' };
+  const DRUM_NAMES = ['Kick', 'Snare', 'Hat', 'Open', 'Tom', 'Clap', 'Crash'];
+  // auto beats: one bar of 16th steps per drum [drumId, pattern, velocity]
+  const BEATS = [
+    { name: '' },
+    { name: 'Rock', p: [[0, 'x.......x.x.....', 1], [1, '....x.......x...', 1], [2, 'x.x.x.x.x.x.x.x.', .7]] },
+    { name: 'Hip-Hop', p: [[0, 'x.....x...x.....', 1], [1, '....x.......x...', .95], [2, 'x.x.x.x.x.x.x.xx', .55]] },
+    { name: 'House', p: [[0, 'x...x...x...x...', 1], [5, '....x.......x...', .8], [3, '..x...x...x...x.', .6], [2, '.x.x.x.x.x.x.x.x', .35]] },
+    { name: 'Lo-Fi', p: [[0, 'x.....x..x......', .9], [1, '....x.......x..x', .7], [2, 'x.x.x.x.x.x.x.x.', .4]] }
+  ];
   const LOOKAHEAD = 0.12;          // seconds scheduled ahead
   const TICK_MS = 25;
   const COUNT_IN = 4;              // beats
@@ -25,12 +36,13 @@
       bars: 'bars', metro: 'Metronome', quant: 'Quantize', countin: 'Count-in',
       language: 'Language', theme: 'Theme', light: 'Light', dark: 'Dark',
       rec_audio: 'Record audio', stop_save: 'Stop & save', install: 'Install app',
-      ios_hint: 'iPhone / iPad: Share → Add to Home Screen.',
+      ios_hint: 'Install: Chrome/Edge menu → Install app · iPhone/iPad: Share → Add to Home Screen.',
       cleared: 'LOOP CLEARED', undone: 'LAYER REMOVED', nothing: 'NOTHING TO UNDO',
       len_locked: 'CLEAR LOOP FIRST', no_rec: 'NOT SUPPORTED', saved: 'SAVED',
       rec: 'REC', play: 'Play / stop loop', undo: 'Undo last layer', clear: 'Clear loop',
-      shortcuts: 'Keys: A S D F chords · Z X C modifiers · Space play · R record',
-      tip_hold: 'Modifiers: tap = latch, hold = momentary'
+      shortcuts: 'Keys: A S D F chords · Z X C modifiers · Space play · R record · M chords/drums',
+      tip_hold: 'Modifiers: tap = latch, hold = momentary',
+      beat: 'Beat', mode: 'Switch chords / drums', stick_hint: 'Joystick: left/right = pitch bend, up/down = octave'
     },
     de: {
       key: 'Tonart', sound: 'Klang', tempo: 'Tempo & Loop', settings: 'Einstellungen',
@@ -39,12 +51,13 @@
       bars: 'Takte', metro: 'Metronom', quant: 'Quantisierung', countin: 'Vorzähler',
       language: 'Sprache', theme: 'Design', light: 'Hell', dark: 'Dunkel',
       rec_audio: 'Audio aufnehmen', stop_save: 'Stopp & speichern', install: 'App installieren',
-      ios_hint: 'iPhone / iPad: Teilen → Zum Home-Bildschirm.',
+      ios_hint: 'Installieren: Chrome/Edge-Menü → App installieren · iPhone/iPad: Teilen → Zum Home-Bildschirm.',
       cleared: 'LOOP GELÖSCHT', undone: 'EBENE ENTFERNT', nothing: 'NICHTS ZU TUN',
       len_locked: 'ERST LOOP LEEREN', no_rec: 'NICHT UNTERSTÜTZT', saved: 'GESPEICHERT',
       rec: 'REC', play: 'Loop abspielen / stoppen', undo: 'Letzte Ebene entfernen', clear: 'Loop leeren',
-      shortcuts: 'Tasten: A S D F Akkorde · Z X C Modifier · Leertaste Play · R Aufnahme',
-      tip_hold: 'Modifier: Tippen = einrasten, Halten = momentan'
+      shortcuts: 'Tasten: A S D F Akkorde · Z X C Modifier · Leertaste Play · R Aufnahme · M Akkorde/Drums',
+      tip_hold: 'Modifier: Tippen = einrasten, Halten = momentan',
+      beat: 'Beat', mode: 'Akkorde / Drums umschalten', stick_hint: 'Joystick: links/rechts = Pitch-Bend, hoch/runter = Oktave'
     }
   };
 
@@ -52,7 +65,7 @@
   const PRESETS = [
     { name: 'Pad',
       oscs: [{ t: 'sawtooth', d: -8, m: 1, g: .35 }, { t: 'sawtooth', d: 8, m: 1, g: .35 }, { t: 'triangle', d: 0, m: .5, g: .5 }],
-      a: .25, d: 1.4, s: .75, r: .9, f: 900, fk: 2, fe: .8, fd: 1.2, q: .6, gain: .28 },
+      a: .035, d: 1.4, s: .75, r: .55, f: 900, fk: 2, fe: .8, fd: 1.2, q: .6, gain: .28 },
     { name: 'Keys',
       oscs: [{ t: 'sine', d: 0, m: 1, g: .7 }, { t: 'triangle', d: 3, m: 2, g: .25 }, { t: 'sine', d: 0, m: 4, g: .08 }],
       a: .004, d: .9, s: .3, r: .4, f: 3500, fk: 3, fe: .5, fd: .4, q: .4, gain: .32 },
@@ -74,12 +87,12 @@
   const S = {
     lang: null, theme: null,
     key: 0, minor: false, preset: 0, bpm: 100, arp: 0, arpRate: .25, bars: 2,
-    metro: false, quant: true, countIn: true, vol: .8, tone: .8, reverb: .25,
+    metro: false, quant: true, countIn: true, beat: 0, tone: .8, reverb: .25, mode: 'chord',
     mods: { seventh: false, sus: false, alt: false },
     panel: null, playing: false, rec: false, loopStart: 0, countStart: 0, layer: 0, events: [],
     msg: '', msgUntil: 0, chord: '', chordUntil: 0, exporting: false
   };
-  const PERSIST = ['lang', 'theme', 'key', 'minor', 'preset', 'bpm', 'arp', 'arpRate', 'bars', 'metro', 'quant', 'countIn', 'vol', 'tone', 'reverb'];
+  const PERSIST = ['lang', 'theme', 'key', 'minor', 'preset', 'bpm', 'arp', 'arpRate', 'bars', 'metro', 'quant', 'countIn', 'beat', 'tone', 'reverb'];
   let saveTimer = 0;
   function save() {
     clearTimeout(saveTimer);
@@ -103,7 +116,7 @@
   const effTheme = () => S.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 
   /* ---------------------------------------------------------------- audio engine */
-  let ctx = null, bus, toneF, dryG, wetG, conv, comp, volG, clickG, recDest;
+  let ctx = null, bus, toneF, dryG, wetG, conv, comp, volG, clickG, recDest, drumG, bendSrc;
   const voices = new Set();
   let lastWin = 0;
 
@@ -129,6 +142,9 @@
     toneF.connect(wetG); wetG.connect(conv); conv.connect(comp);
     comp.connect(volG); volG.connect(ctx.destination);
     clickG.connect(ctx.destination);
+    drumG = ctx.createGain(); drumG.connect(comp);
+    const drumSend = ctx.createGain(); drumSend.gain.value = .15; drumG.connect(drumSend); drumSend.connect(conv);
+    if (ctx.createConstantSource) { bendSrc = ctx.createConstantSource(); bendSrc.offset.value = 0; bendSrc.start(); }
     if (ctx.createMediaStreamDestination) { recDest = ctx.createMediaStreamDestination(); volG.connect(recDest); }
 
     applyVol(); applyTone(); applyReverb();
@@ -176,11 +192,10 @@
     } catch (e) { /* ignore */ }
   }
 
-  function applyVol() {
+  function applyVol() {          // fixed master level, loudness is up to the system volume
     if (!ctx) return;
-    const g = S.vol * S.vol;
-    volG.gain.setTargetAtTime(g, ctx.currentTime, .01);
-    clickG.gain.setTargetAtTime(g * .8, ctx.currentTime, .01);
+    volG.gain.value = .85;
+    clickG.gain.value = .5;
   }
   function applyTone() { if (ctx) toneF.frequency.setTargetAtTime(300 * Math.pow(60, S.tone), ctx.currentTime, .02); }
   function applyReverb() {
@@ -189,10 +204,17 @@
     dryG.gain.setTargetAtTime(1 - S.reverb * .3, ctx.currentTime, .02);
   }
 
+  function stealVoice() {
+    let pick = null;
+    for (const v of voices) { if (v.stopped) { pick = v; break; } }   // oldest voice that is already releasing
+    if (!pick) pick = voices.values().next().value;
+    if (pick) { pick.stop(ctx.currentTime, true); voices.delete(pick); }
+  }
+
   function startVoice(freq, when, vel, pi) {
     const P = PRESETS[pi] || PRESETS[0];
     const t0 = Math.max(when, ctx.currentTime);
-    if (voices.size > 30) { const o = voices.values().next().value; o.stop(ctx.currentTime, true); voices.delete(o); }
+    if (voices.size > 28) stealVoice();
 
     const g = ctx.createGain(), f = ctx.createBiquadFilter();
     f.type = 'lowpass'; f.Q.value = P.q;
@@ -208,6 +230,7 @@
     const oscs = P.oscs.map(o => {
       const os = ctx.createOscillator();
       os.type = o.t; os.frequency.value = freq * o.m; os.detune.value = o.d;
+      if (bendSrc) bendSrc.connect(os.detune);
       if (o.g !== 1) { const og = ctx.createGain(); og.gain.value = o.g; os.connect(og); og.connect(f); } else os.connect(f);
       os.start(t0);
       return os;
@@ -217,13 +240,16 @@
     const v = {
       stopped: false, loop: false,
       stop(rt, fast) {
-        if (v.stopped) return; v.stopped = true;
+        if (v.stopped && !fast) return; v.stopped = true;
         const at = Math.max(rt || 0, ctx.currentTime), rel = fast ? .03 : P.r;
         g.gain.cancelScheduledValues(at);
         g.gain.setTargetAtTime(0, at, rel / 3);
         const end = at + rel * 1.3 + .05;
         oscs.forEach(o => { try { o.stop(end); } catch (e) { /* already stopped */ } });
-        oscs[0].onended = () => { try { g.disconnect(); f.disconnect(); } catch (e) { /* ignore */ } voices.delete(v); };
+        oscs[0].onended = () => { try { g.disconnect(); f.disconnect(); } catch (e) { /* ignore */ }
+          if (bendSrc) oscs.forEach(o => { try { bendSrc.disconnect(o.detune); } catch (e) { /* ignore */ } });
+          voices.delete(v);
+        };
       }
     };
     voices.add(v);
@@ -237,6 +263,68 @@
     g.gain.exponentialRampToValueAtTime(accent ? .18 : .1, at + .002);
     g.gain.exponentialRampToValueAtTime(.0001, at + .05);
     o.connect(g); g.connect(clickG); o.start(at); o.stop(at + .06);
+  }
+
+  /* ---------------------------------------------------------------- drums (synthesised, no samples) */
+  let noiseBuf = null, openHat = null;
+  function noise() {
+    if (!noiseBuf) {
+      noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+      const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    return noiseBuf;
+  }
+  function noiseHit(at, o) {
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noise(); s.loop = true;
+    f.type = o.type || 'highpass'; f.frequency.value = o.freq || 6000; f.Q.value = o.q || .7;
+    g.gain.setValueAtTime(.0001, at);
+    g.gain.exponentialRampToValueAtTime(o.gain, at + .001);
+    g.gain.exponentialRampToValueAtTime(.0001, at + o.dur);
+    s.connect(f); f.connect(g); g.connect(drumG);
+    s.start(at, Math.random() * .5); s.stop(at + o.dur + .03);
+    return g;
+  }
+  function toneHit(at, f0, f1, dur, gain, type) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(f0, at); o.frequency.exponentialRampToValueAtTime(f1, at + dur * .7);
+    g.gain.setValueAtTime(gain, at); g.gain.exponentialRampToValueAtTime(.0001, at + dur);
+    o.connect(g); g.connect(drumG); o.start(at); o.stop(at + dur + .03);
+  }
+  function drum(id, at, v) {
+    at = Math.max(at, ctx.currentTime);
+    switch (id) {
+      case 0: toneHit(at, 160, 45, .38, 1.1 * v); noiseHit(at, { type: 'lowpass', freq: 2500, dur: .015, gain: .3 * v }); break;
+      case 1: toneHit(at, 200, 130, .13, .5 * v, 'triangle'); noiseHit(at, { freq: 1800, q: .5, dur: .2, gain: .7 * v }); break;
+      case 2:
+        if (openHat) { openHat.gain.cancelScheduledValues(at); openHat.gain.setTargetAtTime(0, at, .008); openHat = null; }
+        noiseHit(at, { freq: 8000, dur: .05, gain: .4 * v }); break;
+      case 3: openHat = noiseHit(at, { freq: 7000, dur: .32, gain: .35 * v }); break;
+      case 4: toneHit(at, 220, 85, .32, .9 * v); break;
+      case 5:
+        [0, .012, .024].forEach(k => noiseHit(at + k, { type: 'bandpass', freq: 1500, q: 1.1, dur: .05, gain: .6 * v }));
+        noiseHit(at + .036, { type: 'bandpass', freq: 1500, q: 1.1, dur: .16, gain: .5 * v }); break;
+      case 6: noiseHit(at, { freq: 5500, dur: 1.3, gain: .4 * v }); break;
+    }
+  }
+  function drumHit(id) {
+    initAudio(); if (!ctx) return;
+    const now = ctx.currentTime;
+    drum(id, now, 1);
+    recNote(id, now, 1, .05, 0, 1);
+    S.chord = DRUM_NAMES[id].toUpperCase(); S.chordUntil = performance.now() + 250;
+  }
+  function syncMode() {
+    const drum = S.mode === 'drum';
+    document.body.classList.toggle('drum', drum);
+    $('#t-mode').textContent = drum ? '🥁' : '🎹';
+    renderPads();
+  }
+  function setMode(m) {
+    S.mode = m;
+    [...holds.keys()].forEach(chordUp);
+    syncMode(); msg(m === 'drum' ? 'DRUMS' : (S.lang === 'de' ? 'AKKORDE' : 'CHORDS'), 700);
   }
 
   /* ---------------------------------------------------------------- chords */
@@ -276,14 +364,14 @@
   }
 
   /* ---------------------------------------------------------------- recording of notes into the loop */
-  function recNote(n, at, vel, dur, pi) {
+  function recNote(n, at, vel, dur, pi, kind) {
     if (!S.rec || !S.playing) return null;
     let b = (at - S.loopStart) / spb();
     if (b < 0) return null;                                    // count-in
     const L = loopBeats(), iter = Math.floor(b / L);
     b -= iter * L;
     if (S.quant) { b = Math.round(b * 4) / 4; if (b >= L) b -= L; }
-    const e = { b, n, v: vel, d: dur, p: pi, l: S.layer, skip: iter };
+    const e = { b, n, v: vel, d: dur, p: pi, l: S.layer, skip: iter, k: kind | 0 };
     S.events.push(e);
     return { e, t0: at };
   }
@@ -319,16 +407,17 @@
     initAudio();
     if (!ctx || holds.has(id)) return;
     const info = chordFor((S.mods.alt ? ALT : DEF)[i]);
+    const sh = octShift * 12, notes = info.notes.map(n => n + sh), bass = info.bass + sh;
     const now = ctx.currentTime;
     const h = { voices: [], recs: [], arp: null, i };
     if (!arpEpochFallback) arpEpochFallback = now;
 
     if (S.arp === 0) {
-      info.notes.forEach(n => { h.voices.push(startVoice(mtof(n), now, .8, S.preset)); h.recs.push(recNote(n, now, .8, .25, S.preset)); });
-      h.voices.push(startVoice(mtof(info.bass), now, .55, S.preset));
-      h.recs.push(recNote(info.bass, now, .55, .25, S.preset));
+      notes.forEach(n => { h.voices.push(startVoice(mtof(n), now, .8, S.preset)); h.recs.push(recNote(n, now, .8, .25, S.preset)); });
+      h.voices.push(startVoice(mtof(bass), now, .55, S.preset));
+      h.recs.push(recNote(bass, now, .55, .25, S.preset));
     } else {
-      h.arp = { seq: info.notes.concat(info.notes.map(n => n + 12)), i: 0, next: 0 };
+      h.arp = { seq: notes.concat(notes.map(n => n + 12)), i: 0, next: 0 };
       fireArp(h, now);
       const step = arpStepSec(), ep = arpEpoch();
       let nx = ep + Math.ceil((now - ep) / step - 1e-6) * step;
@@ -389,6 +478,15 @@
       if (S.metro || at < S.loopStart - 1e-6) click(at, (((k % 4) + 4) % 4) === 0);
     }
 
+    // auto beat (16th grid, one-bar patterns aligned to the loop start)
+    if (S.beat && BEATS[S.beat] && BEATS[S.beat].p) {
+      const st = sp / 4, kb = Math.max(0, Math.ceil((from - S.loopStart) / st - 1e-9));
+      for (let k = kb; S.loopStart + k * st < end; k++) {
+        const at = S.loopStart + k * st, step = k % 16;
+        BEATS[S.beat].p.forEach(r => { if (r[1][step] === 'x') drum(r[0], at, r[2]); });
+      }
+    }
+
     // loop events
     if (S.events.length) {
       const n0 = Math.max(0, Math.floor((from - S.loopStart) / loopDur)), n1 = Math.floor((end - S.loopStart) / loopDur);
@@ -398,8 +496,8 @@
           if (e.b >= L || n === e.skip) continue;
           const at = S.loopStart + n * loopDur + e.b * sp;
           if (at >= from && at < end) {
-            const v = startVoice(mtof(e.n), at, e.v, e.p);
-            v.loop = true; v.stop(at + e.d * sp);
+            if (e.k) drum(e.n, at, e.v);
+            else { const v = startVoice(mtof(e.n), at, e.v, e.p); v.loop = true; v.stop(at + e.d * sp); }
           }
         }
       }
@@ -485,12 +583,19 @@
 
   /* ---------------------------------------------------------------- UI: pads, display, panels */
   function renderPads() {
+    const drum = S.mode === 'drum';
     $$('.chord').forEach(el => {
-      const info = chordFor((S.mods.alt ? ALT : DEF)[+el.dataset.i]);
+      const i = +el.dataset.i;
+      if (drum) { el.querySelector('.num').textContent = String(i + 1); el.querySelector('.nm').textContent = DRUM_NAMES[i]; return; }
+      const info = chordFor((S.mods.alt ? ALT : DEF)[i]);
       el.querySelector('.num').textContent = info.roman;
       el.querySelector('.nm').textContent = info.name;
     });
-    $$('.mod').forEach(el => el.classList.toggle('latched', !!S.mods[el.dataset.m]));
+    $$('.mod').forEach(el => {
+      const m = el.dataset.m;
+      el.querySelector('.nm').textContent = drum ? DRUM_NAMES[4 + MOD_KEYS.indexOf(m)] : MOD_LABEL[m];
+      el.classList.toggle('latched', !drum && !!S.mods[m]);
+    });
   }
 
   const cache = {};
@@ -499,14 +604,15 @@
   function renderDisplay() {
     const now = performance.now();
     const pos = (S.playing && ctx) ? (ctx.currentTime - S.loopStart) / spb() : -99;
-    setText('#d-top', `${NOTES[S.key]} ${S.minor ? t('minor') : t('major')} · ${PRESETS[S.preset].name}`);
+    setText('#d-top', `${S.mode === 'drum' ? 'DRUMS · ' : ''}${NOTES[S.key]} ${S.minor ? t('minor') : t('major')} · ${PRESETS[S.preset].name}`);
     let mid;
     if (now < S.msgUntil) mid = S.msg;
     else if (S.playing && pos < 0 && pos > -COUNT_IN - 1) mid = String(Math.max(1, Math.ceil(-pos)));
     else if (holds.size || now < S.chordUntil) mid = S.chord;
     else mid = S.rec ? '● REC' : S.playing ? '▶' : '';
+    if (cache['#d-mid'] !== mid) $('#d-mid').style.setProperty('--n', Math.max(4, mid.length));
     setText('#d-mid', mid);
-    setText('#d-bot', `${S.bpm} BPM${S.arp ? ' · ARP ' + ARP_LABEL[S.arp] : ''}`);
+    setText('#d-bot', [`${S.bpm} BPM`, S.arp ? 'ARP ' + ARP_LABEL[S.arp] : '', (BEATS[S.beat] || {}).name || '', pitchLabel()].filter(Boolean).join(' · '));
     const pct = (S.playing && pos >= 0) ? ((pos % loopBeats()) / loopBeats()) * 100 : 0;
     const w = pct.toFixed(1) + '%';
     if (cache.bar !== w) { cache.bar = w; $('#d-bar').style.width = w; }
@@ -544,15 +650,15 @@
         <b id="bpmv" class="val">${S.bpm}</b><button class="chip" data-act="tap">${t('tap')}</button></div>`;
       h += `<div class="prow"><span class="plabel">${t('arp')}</span>${seg([[0, t('off')], [1, '↑'], [2, '↓'], [3, '↕'], [4, 'RND']], S.arp, 'arp')}
         ${seg([[1, '1/4'], [.5, '1/8'], [.25, '1/16']], S.arpRate, 'rate')}</div>`;
+      h += `<div class="prow"><span class="plabel">${t('beat')}</span>${seg([[0, t('off')], [1, 'Rock'], [2, 'Hip-Hop'], [3, 'House'], [4, 'Lo-Fi']], S.beat, 'beat')}</div>`;
       h += `<div class="prow"><span class="plabel">${t('loop')}</span>${seg([[1, '1'], [2, '2'], [4, '4'], [8, '8']], S.bars, 'bars', S.events.length ? ' dis' : '')}<span class="hint">${t('bars')}</span></div>`;
       h += `<div class="prow">${toggle(S.metro, 'metro', t('metro'))}${toggle(S.quant, 'quant', t('quant'))}${toggle(S.countIn, 'countin', t('countin'))}</div>`;
     } else if (n === 'settings') {
       h += `<div class="prow"><span class="plabel">${t('language')}</span>${seg([['de', 'Deutsch'], ['en', 'English']], S.lang, 'lang')}
         <span class="plabel sp">${t('theme')}</span>${seg([['light', t('light')], ['dark', t('dark')]], effTheme(), 'theme')}</div>`;
-      h += slider('r-vol', t('volume'), 0, 100, Math.round(S.vol * 100));
       h += `<div class="prow">${toggle(S.exporting, 'export', S.exporting ? '■ ' + t('stop_save') : '● ' + t('rec_audio'))}
         ${deferredInstall ? `<button class="chip" data-act="install">${t('install')}</button>` : ''}</div>`;
-      h += `<p class="hint">${t('ios_hint')}<br>${t('shortcuts')}<br>Fresh Beatz v1.0</p>`;
+      h += `<p class="hint">${t('stick_hint')}<br>${t('ios_hint')}<br>${t('shortcuts')}<br>Fresh Beatz v1.1</p>`;
     }
     p.innerHTML = h;
   }
@@ -582,6 +688,7 @@
       case 'tap': tapTempo(); break;
       case 'arp': S.arp = +v; break;
       case 'rate': S.arpRate = +v; break;
+      case 'beat': S.beat = +v; break;
       case 'bars': if (S.events.length) { msg(t('len_locked')); return; } S.bars = +v; break;
       case 'metro': S.metro = !S.metro; break;
       case 'quant': S.quant = !S.quant; break;
@@ -599,29 +706,41 @@
     if (id === 'r-bpm') { setBpm(v); const el = $('#bpmv'); if (el) el.textContent = S.bpm; }
     else if (id === 'r-tone') { S.tone = v / 100; applyTone(); save(); }
     else if (id === 'r-rev') { S.reverb = v / 100; applyReverb(); save(); }
-    else if (id === 'r-vol') { setVol(v / 100, false); }
   }
 
-  /* ---------------------------------------------------------------- knob */
-  function setVol(v, show = true) {
-    S.vol = Math.min(1, Math.max(0, v));
-    applyVol(); save();
-    $('#knobwrap').style.setProperty('--rot', (-135 + S.vol * 270) + 'deg');
-    if (show) msg('VOL ' + Math.round(S.vol * 100), 700);
+  /* ---------------------------------------------------------------- joystick: pitch bend (x) + octave (y) */
+  const stick = { x: 0, y: 0 };
+  let octShift = 0;
+  const bendCents = () => Math.round(stick.x * 200);
+  function applyStick() {
+    octShift = stick.y < -.55 ? 1 : stick.y > .55 ? -1 : 0;
+    if (ctx && bendSrc) bendSrc.offset.setTargetAtTime(bendCents(), ctx.currentTime, .012);
   }
-  function bindKnob() {
-    const k = $('#knob'); let drag = null;
-    k.addEventListener('pointerdown', e => { e.preventDefault(); k.setPointerCapture(e.pointerId); drag = { x: e.clientX, y: e.clientY, v: S.vol }; });
-    k.addEventListener('pointermove', e => { if (drag) setVol(drag.v + ((drag.y - e.clientY) + (e.clientX - drag.x)) / 180); });
-    const end = () => { drag = null; };
-    k.addEventListener('pointerup', end); k.addEventListener('pointercancel', end);
-    k.addEventListener('keydown', e => { if (e.key === 'ArrowUp' || e.key === 'ArrowRight') setVol(S.vol + .05); if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') setVol(S.vol - .05); });
-    const w = $('#knobwrap');
-    for (let i = 0; i < 9; i++) {
-      const d = document.createElement('i'); d.className = 'tick';
-      d.style.transform = `rotate(${-135 + i * 33.75}deg) translateY(calc(var(--ks) * -.44))`;
-      w.appendChild(d);
-    }
+  function pitchLabel() {
+    const c = bendCents(), p = [];
+    if (Math.abs(c) >= 10) p.push((c > 0 ? '+' : '−') + (Math.abs(c) / 100).toFixed(1) + 'st');
+    if (octShift) p.push((octShift > 0 ? '+' : '−') + '1oct');
+    return p.join(' ');
+  }
+  function bindStick() {
+    const w = $('#stickwrap'), s = $('#stick'); let id = null, cx = 0, cy = 0, R = 1;
+    const set = (x, y) => {
+      const m = Math.hypot(x, y); if (m > 1) { x /= m; y /= m; }
+      stick.x = Math.abs(x) < .08 ? 0 : x; stick.y = y;
+      w.style.setProperty('--sx', x.toFixed(3)); w.style.setProperty('--sy', y.toFixed(3));
+      applyStick();
+    };
+    const move = e => { if (e.pointerId === id) set((e.clientX - cx) / R, (e.clientY - cy) / R); };
+    w.addEventListener('pointerdown', e => {
+      if (id !== null) return;
+      e.preventDefault(); initAudio();
+      try { w.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ }
+      const r = w.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2; R = r.width * .22;
+      id = e.pointerId; s.classList.add('drag'); move(e);
+    });
+    w.addEventListener('pointermove', move);
+    const end = e => { if (e.pointerId !== id) return; id = null; s.classList.remove('drag'); set(0, 0); };
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => w.addEventListener(n, end));
   }
 
   /* ---------------------------------------------------------------- language / theme */
@@ -651,10 +770,8 @@
 
   function init() {
     load(); applyTheme(); applyLang();
-    $('#knobwrap').style.setProperty('--rot', (-135 + S.vol * 270) + 'deg');
-
-    $$('.chord').forEach(el => { const i = +el.dataset.i; bindPad(el, pid => chordDown(i, 'p' + pid), pid => chordUp('p' + pid)); });
-    $$('.mod').forEach(el => { const m = el.dataset.m; bindPad(el, pid => modDown(m, 'p' + pid), pid => modUp('p' + pid)); });
+    $$('.chord').forEach(el => { const i = +el.dataset.i; bindPad(el, pid => (S.mode === 'drum' ? drumHit(i) : chordDown(i, 'p' + pid)), pid => chordUp('p' + pid)); });
+    $$('.mod').forEach(el => { const m = el.dataset.m; bindPad(el, pid => (S.mode === 'drum' ? drumHit(4 + MOD_KEYS.indexOf(m)) : modDown(m, 'p' + pid)), pid => modUp('p' + pid)); });
     renderPads();
 
     $$('.cbtn').forEach(b => b.addEventListener('click', () => { initAudio(); setPanel(b.dataset.panel); }));
@@ -666,15 +783,17 @@
     $('#t-play').addEventListener('click', togglePlay);
     $('#t-undo').addEventListener('click', undoLayer);
     $('#t-clr').addEventListener('click', clearLoop);
-    bindKnob(); syncTransport();
+    $('#t-mode').addEventListener('click', () => { initAudio(); setMode(S.mode === 'drum' ? 'chord' : 'drum'); });
+    bindStick(); syncTransport(); syncMode();
 
     document.addEventListener('keydown', e => {
       if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
       if (/INPUT|TEXTAREA/.test(document.activeElement && document.activeElement.tagName) && e.code === 'Space') return;
-      if (e.code in KEYS_CHORD) chordDown(KEYS_CHORD[e.code], 'k' + e.code);
-      else if (e.code in KEYS_MOD) modDown(KEYS_MOD[e.code], 'k' + e.code);
+      if (e.code in KEYS_CHORD) { if (S.mode === 'drum') drumHit(KEYS_CHORD[e.code]); else chordDown(KEYS_CHORD[e.code], 'k' + e.code); }
+      else if (e.code in KEYS_MOD) { if (S.mode === 'drum') drumHit(4 + MOD_KEYS.indexOf(KEYS_MOD[e.code])); else modDown(KEYS_MOD[e.code], 'k' + e.code); }
       else if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
       else if (e.code === 'KeyR') toggleRec();
+      else if (e.code === 'KeyM') setMode(S.mode === 'drum' ? 'chord' : 'drum');
     });
     document.addEventListener('keyup', e => {
       if (e.code in KEYS_CHORD) chordUp('k' + e.code);
